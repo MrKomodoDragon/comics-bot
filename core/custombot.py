@@ -34,3 +34,6 @@ class ComicsBot(commands.Bot):
 
     async def on_message_edit(self, before, after):
         ...
+
+    async def on_ready(self):
+        print("The bot is ready")
