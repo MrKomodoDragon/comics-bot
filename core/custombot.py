@@ -19,13 +19,14 @@ class ComicsBot(commands.Bot):
         return await super().get_context(message, cls=cls or ComicsContext)
 
     async def start(self, token, *, reconnect=True):
-        self.load_extension('jishaku')
+        await self.load_extension('jishaku')
+        await self.load_extension("cogs.gocomics")
         import os
 
         os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
         os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'True'
         os.environ['JISHAKU_HIDE'] = 'True'
-        self.reload_extension('jishaku')
+        await self.reload_extension('jishaku')
         return await super().start(token, reconnect=reconnect)
 
     async def close(self):
