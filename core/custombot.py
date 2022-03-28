@@ -3,7 +3,7 @@ import asyncio
 import aiohttp
 import toml
 from discord.ext import commands
-
+import discord
 from .context import ComicsContext
 
 
@@ -12,8 +12,8 @@ class ComicsBot(commands.Bot):
         super().__init__(*args, **kwargs)
         self.afk = {}
         self.loop = asyncio.get_event_loop()
-        self.session = aiohttp.ClientSession()
         self.config = toml.load('config.toml')
+        self.started = False
 
     async def get_context(self, message, *, cls=None):
         return await super().get_context(message, cls=cls or ComicsContext)
@@ -29,6 +29,9 @@ class ComicsBot(commands.Bot):
         await self.reload_extension('jishaku')
         return await super().start(token, reconnect=reconnect)
 
+    async def setup_hook(self) -> None:
+        self.session = aiohttp.ClientSession()
+        return await super().setup_hook()
     async def close(self):
         await self.session.close()
         return await super().close()
@@ -38,3 +41,6 @@ class ComicsBot(commands.Bot):
 
     async def on_ready(self):
         print("The bot is ready")
+       # if not self.started:
+        #    await self.tree.sync(guild=discord.Object(id=842459680436781078))
+        #    self.started = True
