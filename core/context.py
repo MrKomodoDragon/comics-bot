@@ -24,5 +24,5 @@ class ComicsContext(commands.Context):
         # consider this to be an *incredibly* strange use case. I'd rather go
         # for this common use case rather than waste performance for the
         # odd one.
-        pattern: re.Pattern = re.compile(r"<@!?%s>" % user.id)
+        pattern: re.Pattern = re.compile(f"<@!?{user.id}>")
         return pattern.sub("@%s" % user.display_name.replace("\\", r"\\"), self.prefix)
