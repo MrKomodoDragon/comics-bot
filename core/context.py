@@ -1,21 +1,24 @@
 import re
+
 from discord.ext import commands
 import discord
 
 
 class ComicsContext(commands.Context):
-    def embed(self, **kwargs):
+    def embed(self, **kwargs) -> discord.Embed
         color = kwargs.pop("color", self.bot.embed_color)
         embed = discord.Embed(**kwargs, color=color)
         embed.timestamp = self.message.created_at
         embed.set_footer(
-            text=f"Requested by {self.author}", icon_url=self.author.avatar.url  # type: ignore
+            text=f"Requested by {self.author}", 
+            icon_url=self.author.avatar.url  # type: ignore
         )
         return embed
 
     @property
     def clean_prefix(self) -> str:
         """:class:`str`: The cleaned up invoke prefix. i.e. mentions are ``@name`` instead of ``<@id>``."""
+        
         user = self.guild.me if self.guild else self.bot.user  # type: ignore
         # this breaks if the prefix mention is not the bot itself but I
         # consider this to be an *incredibly* strange use case. I'd rather go
