@@ -1,32 +1,35 @@
 import re
+import datetime
+from typing import NamedTuple, Optional
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-import datetime
+
 import bs4
 from rapidfuzz import process
-import typing
 
-class GoComicsDate(typing.NamedTuple):
+class GoComicsDate(NamedTuple):
     year: int
     month: int
     day: int
 
 class GoComicsDateTransformer(app_commands.Transformer):
     @classmethod
-    async def transform(cls, interaction: discord.Interaction, value: str) -> typing.Optional[GoComicsDate]:
+    async def transform(cls, interaction: discord.Interaction, value: str) -> Optional[GoComicsDate]:
         if not re.fullmatch(r"^\d{4}(-|/)\d{1,2}(-|/)\d{1,2}", value):
             await interaction.response.send_message("The date format must be in yyyy-mm-dd format :).")
-            return
-        await interaction.response.send_message(interaction.locale.__str__())
-        thing = re.split(r"(-|/)", value)
-        return GoComicsDate(year=thing[0], month=thing[2], day=thing[4])
+        else:
+            await interaction.response.send_message(str(interaction.locale))
+            thing = re.split(r"(-|/)", value)
+            return GoComicsDate(year=thing[0], month=thing[2], day=thing[4])
 
 async def comicname_autocomplete(
-interaction: discord.Interaction,
-current: str,
+    interaction: discord.Interaction,
+    current: str,
 ) -> app_commands.Choice[str]:  # type:ignore
-    choices = [
+    
+    choices: list[str] = [
         "Aaggghhh",
         "The Academia Waltz",
         "Adam@Home",
@@ -504,7 +507,7 @@ current: str,
 
 
 class GoComics(app_commands.Group):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.bot = kwargs.pop("bot")
         super().__init__(*args, **kwargs)
 
@@ -512,6 +515,7 @@ class GoComics(app_commands.Group):
     @app_commands.describe(comicname="The name of the comic you want to see")
     @app_commands.autocomplete(comicname=comicname_autocomplete) # type: ignore
     async def today(self, interaction: discord.Interaction, comicname: str):
+        
         today = datetime.date.today().strftime("%Y/%m/%d")
         comicname = comicname.replace(" ", "").casefold()
         async with self.bot.session.get(
@@ -524,16 +528,28 @@ class GoComics(app_commands.Group):
                 data = await r.text()
                 parser = bs4.BeautifulSoup(data, "html.parser")
                 comic = parser.find("picture", class_="item-comic-image")
-                embed = discord.Embed(title=comic.img["alt"], color=0x0000FF, url=f"https://gocomics.com/{comicname}/{today}")  # type: ignore
+                
+                embed = discord.Embed(
+                    title=comic.img["alt"], 
+                    color=0x0000FF, 
+                    url=f"https://gocomics.com/{comicname}/{today}"
+                )  # type: ignore
                 embed.set_image(url=comic.img["src"])  # type: ignore
+                
                 await interaction.followup.send(embed=embed)
 
     @app_commands.command()
     @app_commands.describe(comicname="The name of the comic you want to see", date="Date of the comic you want to se")
     @app_commands.autocomplete(comicname=comicname_autocomplete) # type: ignore
-    async def archive(self, interaction: discord.Interaction, comicname: str, date: app_commands.Transform[GoComicsDate, GoComicsDateTransformer] ):
+    async def archive(
+        self, 
+        interaction: discord.Interaction, 
+        comicname: str, 
+        date: app_commands.Transform[GoComicsDate, GoComicsDateTransformer]
+    ):
         date_ = f"{date.year}/{date.month}/{date.day}"
         comicname = comicname.replace(" ", "").casefold()
+        
         async with self.bot.session.get(
             f"https://gocomics.com/{comicname}/{date_}"
         ) as r:
@@ -541,16 +557,18 @@ class GoComics(app_commands.Group):
                 await interaction.response.send_message("Comic not found :(")
             else:
                 await interaction.response.defer()
+                
                 data = await r.text()
                 parser = bs4.BeautifulSoup(data, "html.parser")
                 comic = parser.find("picture", class_="item-comic-image")
-                embed = discord.Embed(title=comic.img["alt"], color=0x0000FF, url=f"https://gocomics.com/{comicname}/{date_}")  # type: ignore
+                
+                embed = discord.Embed(
+                    title=comic.img["alt"], 
+                    color=0x0000FF, 
+                    url=f"https://gocomics.com/{comicname}/{date_}"
+                )  # type: ignore
                 embed.set_image(url=comic.img["src"])  # type: ignore
                 await interaction.followup.send(embed=embed)
-
-
-
-    
 
 
 async def setup(bot: commands.Bot):
